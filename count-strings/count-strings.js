@@ -9,7 +9,8 @@ function processData(input) {
 } 
 
 function count(regexp, n) {
-    transform(regexp);
+    var nfa = transform(regexp);
+    nfa.print();
 }
 
 process.stdin.resume();
