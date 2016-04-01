@@ -12,7 +12,43 @@ function processData(input) {
 function count(regexp, n) {
     var nfa = nfaFromRegexp(regexp),
         dfa = dfaFromNfa(nfa);
-//    nfa.print();
+
+    return paths(dfa, n);
+}
+
+function paths(dfa, n) {
+    var paths = {0: 1},
+        newPaths = {};
+
+    for (var i = 0 ; i < n ; ++i) {
+        newPaths = {};
+        for (var node in paths) {
+            if(dfa[node].links['a']) {
+                add(dfa[node].links['a'], paths[node]);
+            }   
+            if(dfa[node].links['b']) {
+                add(dfa[node].links['b'], paths[node]);
+            }   
+        }
+        paths = newPaths;
+    }
+
+    var result = 0;
+    for (var node in paths) {
+        if (dfa[node].finite) {
+            result += paths[node];
+        }
+    }
+
+    return result;
+
+    function add(node, numPaths) {
+        if (!newPaths[node]) {
+            newPaths[node] = numPaths;
+        } else {
+            newPaths[node] += numPaths;
+        }
+    }
 }
 
 process.stdin.resume();

@@ -1,6 +1,6 @@
 var regexpTree = require('./regexp-tree.js');
 
-function transform(regexp) {
+function buildNfa(regexp) {
 	var tree = regexpTree(regexp);
 
 	var nfa = transformHelper(tree);
@@ -170,5 +170,5 @@ function alternation() {
 	};
 }
 
-module.exports = transform;
+module.exports = buildNfa;
 

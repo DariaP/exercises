@@ -1,4 +1,4 @@
-function convert(nfa) {
+function buildDfa(nfa) {
 	var nfaLinks = nfaMap(nfa),
 		dfaNodes = {},
 		dfaNodesStack = [{
@@ -6,7 +6,6 @@ function convert(nfa) {
 			nfaNodes: new Set()
 		}];
 
-		console.log(nfaLinks.finite);
 	dfaNodesStack[0].nfaNodes.add(0)
 
 	while (dfaNodesStack.length !== 0) {
@@ -47,7 +46,8 @@ function convert(nfa) {
 
 		dfaNodes[dfaNode.id] = dfaNode;
 	}
-	console.log(dfaNodes);
+
+	return dfaNodes;
 
 	function process(dfaNode, nfaNodeId) {
 		//console.log(dfaNode.id + " " + )
@@ -109,4 +109,4 @@ function nfaMap(nfa) {
 	return links;
 }
 
-module.exports = convert;
+module.exports = buildDfa;
