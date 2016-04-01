@@ -1,4 +1,5 @@
-var transform = require('./regexp-to-nfa.js');
+var nfaFromRegexp = require('./regexp-to-nfa.js'),
+    dfaFromNfa = require('./nfa-to-dfa');
 
 function processData(input) {
     var n = input[0];
@@ -9,8 +10,9 @@ function processData(input) {
 } 
 
 function count(regexp, n) {
-    var nfa = transform(regexp);
-    nfa.print();
+    var nfa = nfaFromRegexp(regexp),
+        dfa = dfaFromNfa(nfa);
+//    nfa.print();
 }
 
 process.stdin.resume();
