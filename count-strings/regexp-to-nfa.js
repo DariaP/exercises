@@ -33,6 +33,8 @@ function transform(regexp) {
 			console.log(link);
 		});
 	}
+
+	nfa.finite().finite = true;
 	return nfa.head();
 }
 
@@ -78,6 +80,9 @@ function node(value) {
 		},
 		setNext: function(node) {
 			states[1].links = node.links;
+		},
+		finite: function() {
+			return states[1];
 		}
 	}
 }
@@ -103,17 +108,22 @@ function star() {
 		},
 		setNext: function(node) {
 			states[3].links = node.links;
+		},
+		finite: function() {
+			return states[3];
 		}
 	};
 }
 
 function contatenation() {
-	var head = null;
+	var head = null,
+		finite = null;
 
 	var setNextHelper = function() {};
 	return {
 		setInners: function(inner1, inner2) {
 			head = inner1.head();
+			finite = inner2.finite();
 			inner1.setNext(inner2.head());
 			setNextHelper = inner2.setNext;
 		},
@@ -122,6 +132,9 @@ function contatenation() {
 		},
 		setNext: function(node) {
 			setNextHelper(node);
+		},
+		finite: function() {
+			return finite;
 		}
 	};
 }
@@ -150,6 +163,9 @@ function alternation() {
 		},
 		setNext: function(node) {
 			states[5].links = node.links;
+		},
+		finite: function() {
+			return states[5];
 		}
 	};
 }

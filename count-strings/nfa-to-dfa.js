@@ -6,6 +6,7 @@ function convert(nfa) {
 			nfaNodes: new Set()
 		}];
 
+		console.log(nfaLinks.finite);
 	dfaNodesStack[0].nfaNodes.add(0)
 
 	while (dfaNodesStack.length !== 0) {
@@ -46,10 +47,17 @@ function convert(nfa) {
 
 		dfaNodes[dfaNode.id] = dfaNode;
 	}
+	console.log(dfaNodes);
 
 	function process(dfaNode, nfaNodeId) {
+		//console.log(dfaNode.id + " " + )
 		var reachableNodes = [],
 			links = nfaLinks[nfaNodeId];
+
+		if (nfaNodeId == nfaLinks.finite) {
+			dfaNode.finite = true;
+		}
+
 		if (links['a']) {
 			links['a'].forEach(function(node) {
 				dfaNode.links['a'].add(node);
@@ -64,8 +72,9 @@ function convert(nfa) {
 
 		if (links['e']) {
 			links['e'].forEach(function(node) {
-				if (!dfaNode.nfaNodes.has(node))
-				reachableNodes.push(node);
+				if (!dfaNode.nfaNodes.has(node)) {
+					reachableNodes.push(node);
+				}
 			})
 		}
 
@@ -78,6 +87,11 @@ function nfaMap(nfa) {
 	var links = {}, nodes = [nfa], visited = [];
 	while(nodes.length !== 0) {
 		var nextNode = nodes.pop();
+
+		if(nextNode.finite) {
+			links.finite = nextNode.idx;
+		}
+
 		links[nextNode.idx] = {};
 
 		for (var linkType in nextNode.links) {
