@@ -1,12 +1,11 @@
 function buildDfa(nfa) {
 	var nfaLinks = nfaMap(nfa),
+		dfaLinks = [],
+		i = 0;
 		dfaNodes = {},
 		dfaNodesStack = [{
-			id: "0",
-			nfaNodes: new Set()
+			nfaNodes: new Set([0])
 		}];
-
-	dfaNodesStack[0].nfaNodes.add(0)
 
 	while (dfaNodesStack.length !== 0) {
 		var dfaNode = dfaNodesStack.pop(),
@@ -32,25 +31,42 @@ function buildDfa(nfa) {
 			dfaNodesStack.push({
 				nfaNodes: dfaNode.links['a']
 			});
+			dfaNode.links['a'] = Array.from(dfaNode.links['a'].values()).sort().join(" ");
+		} else {
+			dfaNode.links['a'] = null;
 		}
 
 		if (dfaNode.links['b'].size !== 0) {
 			dfaNodesStack.push({
 				nfaNodes: dfaNode.links['b']
 			});
+			dfaNode.links['b'] = Array.from(dfaNode.links['b'].values()).sort().join(" ");
+		} else {
+			dfaNode.links['b'] = null;
 		}
 
-		for (var linkType in dfaNode.links) {
-			dfaNode.links[linkType] = Array.from(dfaNode.links[linkType].values()).sort().join(" ");
-		}
+		dfaLinks[i] = dfaNode.links;
+		dfaLinks[i].finite = dfaNode.finite;
+		dfaNodes[dfaNode.id] = i++;
 
-		dfaNodes[dfaNode.id] = dfaNode;
 	}
 
-	return dfaNodes;
+	return dfaLinks.map(function(links) {
+		var newLinks = {};
+		if (links.a) {
+			newLinks.a = dfaNodes[links.a];
+		}
+		if (links.b) {
+			newLinks.b = dfaNodes[links.b];
+		}
+		if (links.finite) {
+			newLinks.finite = links.finite;	
+		}
+		return newLinks;
+	});
 
 	function process(dfaNode, nfaNodeId) {
-		//console.log(dfaNode.id + " " + )
+		//console.log(dfaNode.id + " " + nfaNodeId)
 		var reachableNodes = [],
 			links = nfaLinks[nfaNodeId];
 
@@ -73,6 +89,7 @@ function buildDfa(nfa) {
 		if (links['e']) {
 			links['e'].forEach(function(node) {
 				if (!dfaNode.nfaNodes.has(node)) {
+					dfaNode.nfaNodes.add(node);
 					reachableNodes.push(node);
 				}
 			})
