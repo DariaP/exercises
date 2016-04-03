@@ -1,90 +1,49 @@
 function buildDfa(nfa) {
-	var nfaLinks = nfa,//nfaMap(nfa),
-		dfaLinks = [],
+	var dfa = [],
 		i = 0;
-		dfaNodes = {},
-		dfaNodesStack = [{
-			nfaNodes: new Set([0])
-		}];
+		dfaIdxs = {},
+		dfaNodesStack = [newNode(new Set([0]))];
 
 	while (dfaNodesStack.length !== 0) {
+
 		var dfaNode = dfaNodesStack.pop(),
 			reachableNfaNodes = [];
 
-		dfaNode.id = Array.from(dfaNode.nfaNodes.values()).sort().join(" ");
-		if (dfaNodes[dfaNode.id]) {
-			continue;
-		}
-
-		dfaNode.links = {'a': new Set(), 'b': new Set()};
-
 		dfaNode.nfaNodes.forEach(function(nfaNode) {
-			reachableNfaNodes = reachableNfaNodes.concat(process(dfaNode, nfaNode));
+			var newReachableNodes = processReachableNfaNode(dfaNode, nfaNode);
+			reachableNfaNodes = reachableNfaNodes.concat(newReachableNodes);
 		});
 
 		while (reachableNfaNodes.length !== 0) {
 			var nfaNode = reachableNfaNodes.pop();
-			reachableNfaNodes = reachableNfaNodes.concat(process(dfaNode, nfaNode));
+			newReachableNodes = processReachableNfaNode(dfaNode, nfaNode);
+			reachableNfaNodes = reachableNfaNodes.concat(newReachableNodes);
 		}
 
-		if (dfaNode.links['a'].size !== 0) {
-			dfaNodesStack.push({
-				nfaNodes: dfaNode.links['a']
-			});
-			dfaNode.links['a'] = Array.from(dfaNode.links['a'].values()).sort().join(" ");
-		} else {
-			dfaNode.links['a'] = null;
-		}
+		processLink(dfaNode, 'a');
+		processLink(dfaNode, 'b');
 
-		if (dfaNode.links['b'].size !== 0) {
-			dfaNodesStack.push({
-				nfaNodes: dfaNode.links['b']
-			});
-			dfaNode.links['b'] = Array.from(dfaNode.links['b'].values()).sort().join(" ");
-		} else {
-			dfaNode.links['b'] = null;
-		}
+		dfa[i] = dfaNode.links;
+		dfa[i].finite = dfaNode.finite;
 
-		dfaLinks[i] = dfaNode.links;
-		dfaLinks[i].finite = dfaNode.finite;
-		dfaNodes[dfaNode.id] = i++;
-
+		dfaIdxs[dfaNode.id] = i++;
 	}
 
-	return dfaLinks.map(function(links) {
-		var newLinks = {};
-		if (links.a) {
-			newLinks.a = dfaNodes[links.a];
-		}
-		if (links.b) {
-			newLinks.b = dfaNodes[links.b];
-		}
-		if (links.finite) {
-			newLinks.finite = links.finite;	
-		}
-		return newLinks;
-	});
+	replaceIdsWithIdxs(dfa);
+	return dfa;
 
-	function process(dfaNode, nfaNodeId) {
-		//console.log(dfaNode.id + " " + nfaNodeId)
+
+	function processReachableNfaNode(dfaNode, nfaNodeId) {
+
 		var reachableNodes = [],
-			links = nfaLinks[nfaNodeId];
+			links = nfa[nfaNodeId];
 
-		if (nfaNodeId == nfaLinks.finite) {
+		if (nfaNodeId === nfa.finite) {
 			dfaNode.finite = true;
 		}
 
-		if (links['a']) {
-			links['a'].forEach(function(node) {
-				dfaNode.links['a'].add(node);
-			})
-		}
-
-		if (links['b']) {
-			links['b'].forEach(function(node) {
-				dfaNode.links['b'].add(node);
-			})
-		}
+		saveLinks(links, 'a', dfaNode);
+		saveLinks(links, 'b', dfaNode);
 
 		if (links['e']) {
 			links['e'].forEach(function(node) {
@@ -98,32 +57,54 @@ function buildDfa(nfa) {
 		return reachableNodes;
 	}
 
-}
+	function newNode(nfaNodesSet, id) {
+		if (!id) id = nodeId(nfaNodesSet);
+		return {
+			nfaNodes: nfaNodesSet,
+			links: {},
+			id: id
+		};
+	}
 
-function nfaMap(nfa) {
-	var links = {}, nodes = [nfa], visited = [];
-	while(nodes.length !== 0) {
-		var nextNode = nodes.pop();
-
-		if(nextNode.finite) {
-			links.finite = nextNode.idx;
-		}
-
-		links[nextNode.idx] = {};
-
-		for (var linkType in nextNode.links) {
-			links[nextNode.idx][linkType] = nextNode.links[linkType].map(function(node) {
-				return node.idx;
-			});
-			nextNode.links[linkType].forEach(function(node) {
-				if (!visited[node.idx]) {
-					nodes.push(node);
-					visited[node.idx] = true;					
-				}
-			});
+	function saveLinks(links, type, dfaNode) {
+		if (links[type]) {
+			if (!dfaNode.links[type]) {
+				dfaNode.links[type] = new Set();
+			}
+			links[type].forEach(function(node) {
+				dfaNode.links[type].add(node);
+			})
 		}
 	}
-	return links;
+
+	function processLink(dfaNode, linkType) {
+		if (dfaNode.links[linkType]) {
+			var newNodeId = nodeId(dfaNode.links[linkType]);
+			if (!dfaIdxs[newNodeId]) {
+				dfaNodesStack.push(
+					newNode(dfaNode.links[linkType], newNodeId)
+				);
+			}
+			dfaNode.links[linkType] = newNodeId;
+		}
+
+	}
+
+	function replaceIdsWithIdxs(dfa) {
+		dfa.forEach(function(links) {
+			if (links['a']) {
+				links['a'] = dfaIdxs[links['a']];
+			}
+			if (links['b']) {
+				links['b'] = dfaIdxs[links['b']];
+			}
+		});
+	}
+
+	function nodeId(set) {
+		return Array.from(set.values()).sort().join(" ");
+	}
+
 }
 
 module.exports = buildDfa;
