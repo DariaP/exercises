@@ -1,5 +1,5 @@
 function buildDfa(nfa) {
-	var nfaLinks = nfaMap(nfa),
+	var nfaLinks = nfa,//nfaMap(nfa),
 		dfaLinks = [],
 		i = 0;
 		dfaNodes = {},

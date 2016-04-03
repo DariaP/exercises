@@ -27,19 +27,12 @@ function buildNfa(regexp) {
 		return nextPiece;
 	}
 
-	indexNodes(nfa.head());
-	nfa.head().print = function() {
-		nfaLinks(this).forEach(function(link) {
-			console.log(link);
-		});
-	}
-
-	nfa.finite().finite = true;
-	return nfa.head();
+	indexNodes(nfa);
+	return convertTreeToAdjList(nfa);
 }
 
-function indexNodes(head) {
-	var nodes = [head], idx = 0;
+function indexNodes(nfa) {
+	var nodes = [nfa.head()], idx = 0;
 	while(nodes.length !== 0) {
 		var nextNode = nodes.pop();
 		nextNode.idx = idx++;
@@ -53,13 +46,24 @@ function indexNodes(head) {
 	}
 }
 
-function nfaLinks(head) {
-	var links = [], nodes = [head], visited = [];
+function convertTreeToAdjList(nfa) {
+	var adjList = {}, 
+		nodes = [nfa.head()], 
+		visited = [];
+
+	adjList.finite = nfa.finite().idx;
+
 	while(nodes.length !== 0) {
 		var nextNode = nodes.pop();
+
+		adjList[nextNode.idx] = {};
+
 		for (var linkType in nextNode.links) {
+			adjList[nextNode.idx][linkType] = [];
+
 			nextNode.links[linkType].forEach(function(node) {
-				links.push(nextNode.idx+"->"+node.idx);
+				adjList[nextNode.idx][linkType].push(node.idx);
+
 				if (!visited[node.idx]) {
 					nodes.push(node);
 					visited[node.idx] = true;					
@@ -67,7 +71,7 @@ function nfaLinks(head) {
 			});
 		}
 	}
-	return links;
+	return adjList;
 }
 
 function node(value) {
@@ -107,10 +111,10 @@ function star() {
 			return states[0];
 		},
 		setNext: function(node) {
-			states[3].links = node.links;
+			states[n - 1].links = node.links;
 		},
 		finite: function() {
-			return states[3];
+			return states[n - 1];
 		}
 	};
 }
@@ -162,10 +166,10 @@ function alternation() {
 			return states[0];
 		},
 		setNext: function(node) {
-			states[5].links = node.links;
+			states[n - 1].links = node.links;
 		},
 		finite: function() {
-			return states[5];
+			return states[n - 1];
 		}
 	};
 }

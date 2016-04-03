@@ -21,8 +21,7 @@ function regexpTree(regexp) {
 		} else {
 			nextNode.children.push({
 				type: c,
-				parent: nextNode,
-				children: []
+				parent: nextNode
 			});
 		}
 	}
