@@ -1,6 +1,19 @@
 var nfaFromRegexp = require('./regexp-to-nfa.js'),
     dfaFromNfa = require('./nfa-to-dfa'),
-    modBase = 1000000007;
+    modBase = 1000000007,
+    x = 1000,
+    x2 = x * x;
+
+function modMul(a, b) {
+    var a1 = Math.floor(a / x),
+        a2 = a % x,
+        b1 = Math.floor(b / x),
+        b2 = b % x;
+
+    return ((((a1 * b1) % modBase) * x2) % modBase +
+           (((a1 * b2 + a2 * b1) % modBase) * x) % modBase + 
+           (a2 * b2) % modBase) % modBase;
+}
 
 function processData(input) {
     var n = input[0];
@@ -11,14 +24,11 @@ function processData(input) {
 } 
 
 function count(regexp, n) {
-    var nfa = nfaFromRegexp(regexp);
-//console.log("nfa");
-    var dfa = dfaFromNfa(nfa);
-//console.log("dfa");
-    var m = adjMatrix(dfa);
+    var dfa = dfaFromNfa(nfaFromRegexp(regexp)),
+        adjMatrix = buildAdjMatrix(dfa);
 
-    var pathsNum = power(m, n);
-//console.log(pathsNum)
+    var pathsNum = power(adjMatrix, n);
+
     var res = 0;
     for (var i = 0 ; i < dfa.length ; ++i) {
         if (pathsNum[0][i] !== 0 && dfa[i].finite) {
@@ -29,7 +39,7 @@ function count(regexp, n) {
     return res % modBase;
 }
 
-function adjMatrix(dfa) {
+function buildAdjMatrix(dfa) {
     var matrix = [];
     for (var i = 0 ; i < dfa.length ; ++i) {
         var node = dfa[i];
@@ -50,7 +60,6 @@ function isOdd(num) {
 }
 
 function power(m, p) {
-    //if ()
     if (p == 1) {
         return m;
     }
@@ -82,56 +91,6 @@ function multiply(m1, m2) {
         }
     }
     return result;
-}
-
-var x = 1000,
-    x2 = x * x;
-
-function modMul(a, b) {
-    var a1 = Math.floor(a / x),
-        a2 = a % x,
-        b1 = Math.floor(b / x),
-        b2 = b % x;
-
-    return ((((a1 * b1) % modBase) * x2) % modBase +
-           (((a1 * b2 + a2 * b1) % modBase) * x) % modBase + 
-           (a2 * b2) % modBase) % modBase;
-}
-
-function paths(dfa, n) {
-    var paths = {0: 1},
-        newPaths = {};
-
-    for (var i = 0 ; i < n ; ++i) {
-        //console.log(i)
-        newPaths = {};
-        for (var node in paths) {
-            if(dfa[node].links['a']) {
-                add(dfa[node].links['a'], paths[node]);
-            }   
-            if(dfa[node].links['b']) {
-                add(dfa[node].links['b'], paths[node]);
-            }   
-        }
-        paths = newPaths;
-    }
-
-    var result = 0;
-    for (var node in paths) {
-        if (dfa[node].finite) {
-            result += paths[node];
-        }
-    }
-
-    return result;
-
-    function add(node, numPaths) {
-        if (!newPaths[node]) {
-            newPaths[node] = numPaths;
-        } else {
-            newPaths[node] += numPaths;
-        }
-    }
 }
 
 process.stdin.resume();
