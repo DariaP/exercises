@@ -1,87 +1,10 @@
-function processData(str) {
-    var sArray = buildSuffixArray(str),
-        numbers = [],
-        maxNumber = str.length,
-        currentEqualSubstrLen = 0,
-        prevSubstr = sArray.get(0);
-
-    for (var i = 0 ; i < str.length ; ++i) {
-        numbers[i] = 0;
-    }
-
-    for (var i = 1 ; i < str.length ; ++i) {
-
-        var nextSubstr = sArray.get(i),
-            j = 0;
-        
-        while (j < nextSubstr.length() && j < prevSubstr.length()) {
-
-            if (nextSubstr.charAt(j) === prevSubstr.charAt(j)) {
-                if (numbers[j] === 0) {
-                    numbers[j] = 2 * (j + 1);
-                } else {
-                    numbers[j] += (j + 1);                    
-                }
-            } else {
-                while (j < prevSubstr.length()) {
-                    if (numbers[j] > maxNumber) {
-                        maxNumber = numbers[j];
-                    }
-                    numbers[j] = 0;
-                    j++;
-                }
-                break;
-            }
-            j++;
-        }        
-        /*
-
-            var allEqual = true;
-            j = 0;
-        while (j < currentEqualSubstrLen) {
-            if (nextSubstr.charAt(j) === prevSubstr.charAt(j)) {
-                numbers[j] ++;
-            } else {
-                while (j < currentEqualSubstrLen) {
-                    if (numbers[j] > maxNumber) {
-                        maxNumber = numbers[j];
-                    }
-                    numbers[j] = 0;
-                    j++;
-                }
-                allEqual = false;
-                break;
-            }
-            j++;
-        }
-        
-        if (allEqual === true) {
-            // got all the way to the end! continue
-            while (j < prevSubstr.length() && j < nextSubstr.length()) {
-                if (prevSubstr.charAt(j) === nextSubstr.charAt(j)) {
-                    // continue counting for substrings with length j + 1
-                    numbers[j++] = 1;
-                } else {
-                    break;
-                }
-            }
-        }*/
-        
-        prevSubstr = nextSubstr;
-    }
-    
-    for (var i = 0 ; i < str.length ; ++i) {
-        if (numbers[i] > maxNumber) {
-            maxNumber = numbers[i];
-        }
-    }
-    console.log(maxNumber);
+function processData(input) {
+    console.log(count(input));
 } 
 
-function zero(array, from, to) { 
-    for (var i = from ; i <= to ; ++i) {
-        array[i] = 0;
-    }
+function count(str) {
+    var sArray = buildSuffixArray(str);
+    return sArray;
 }
 
 function buildSuffixArray(str) {
@@ -89,40 +12,64 @@ function buildSuffixArray(str) {
     for (var i = 0 ; i < str.length ; ++i) {
         array[i] = i;
     }
-    
-    array.sort(function(i1, i2) {
-        return compareSubstrings(str, i1, i2);
-    });
-    
-    return {
-        print: function() {
-            for (var i = 0 ; i < array.length ; ++i) {
-                console.log(str.substr(array[i], str.length - array[i]));
-            }
-        },
-        get: function(i) {
-            return {
-                length: function() { return (str.length - array[i]) },
-                charAt: function(p) { return str.charAt(array[i] + p); }
-            };
+
+    var buckets = [{
+        suffixes: array,
+        substrLen: 0
+    }];
+
+    var result = str.length;
+    for (var i = 0 ; i < 100 ; ++i) {//while(buckets.length !== 0) {
+        var bucket = buckets.pop();
+
+        if (bucket.suffixes.length === 1) {
+            continue;
         }
-    };
-}
 
-function compareSubstrings(str, i1, i2) {
-    var i = 0;
-    while ((i1 + i) < str.length 
-           && (i2 + i) < str.length 
-           && str.charCodeAt(i1 + i) === str.charCodeAt(i2 + i)) 
-        i++;
+        if (result > (str.len - 1) * bucket.suffixes.length) {
+            continue;
+        }
 
-    if ((i1 + i) === str.length) {
-        return -1;
-    } else if ((i2 + i) === str.length) {
-        return 1;
-    } else {
-        return str.charCodeAt(i1 + i) - str.charCodeAt(i2 + i);
+//console.log(buckets.length + " " + bucket.substrLen + " " + bucket.suffixes.length);
+
+        if (bucket.substrLen * bucket.suffixes.length > result) {
+            result = bucket.substrLen * bucket.suffixes.length;
+        }
+
+        var newBuckets = split(bucket.suffixes, bucket.substrLen)
+            .map(function(newBucket) {
+                return {
+                    suffixes: newBucket,
+                    substrLen: bucket.substrLen + 1
+                }
+            });
+console.log(newBuckets.length);
+        buckets = buckets.concat(newBuckets);
     }
+
+    return result;
+
+
+    function get(suffixArray, i) {
+        return {
+            length: function() { return (str.length - suffixArray[i]) },
+            charAt: function(p) { return str.charAt(suffixArray[i] + p); }
+        };
+    }
+
+    function split(suffixArray, k) {
+        var result = {};
+        for (var i = 0 ; i < suffixArray.length ; ++i) {
+            var substr = get(suffixArray, i),
+                c = substr.charAt(k);
+            if(!result[c]) {
+                result[c] = [];
+            }
+            result[c].push(suffixArray[i]);
+        }
+        return Object.keys(result).map(function(c) { return result[c]; });
+    }
+
 }
 
 process.stdin.resume();
