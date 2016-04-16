@@ -29,7 +29,13 @@ function bigInt(input) {
 			return this;
 		},
 		toString: function() {
-			return "" + higher + " " + lower;
+			if (higher > 0) {
+				var zeroesNum = lowerDigitsNum - lower.toString().length,
+					zeroes = Array(zeroesNum + 1).join("0");
+				return "" + higher + zeroes + lower;
+			} else {
+				return "" + lower;
+			}
 		}
 	}
 }
@@ -132,8 +138,8 @@ function div(left, right) {
 
 			while (continueAdjusting) {
 				//console.log(step);
-				if (step < 1) {
-					break;
+				if (step === 0) {
+					step = 1;
 				}
 				if (divEstimateTooBig(left, right, estimate)) {
 					estimate = estimate - step;
@@ -176,7 +182,7 @@ function divEstimateTooSmall(left, right, estimate) {
 	var product = mulBigIntToInt(right, estimate),
 		remainder = sub(left, product);
 
-	return bigger(remainder, bigInt({higher: 0, lower: estimate}));
+	return bigger(remainder, right);
 }
 
 function mod(number, modBase) {
@@ -189,6 +195,7 @@ module.exports = {
 	sub: sub,
 	mul: mul,
 	div: div,
+	mod: mod,
 	smaller: smaller,
 	bigger: bigger,
 	bigInt: bigInt
